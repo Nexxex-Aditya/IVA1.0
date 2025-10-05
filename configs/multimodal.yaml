@@ -1,0 +1,190 @@
+# Multimodal Adapter Configuration
+multimodal:
+  vision_adapter:
+    enabled: true
+    model_type: "clip"  # "clip" | "dino" | "vit"
+    pretrained_model: "openai/clip-vit-base-patch32"
+    trust_remote_code: false
+    
+    vision_encoder:
+      hidden_size: 512
+      num_layers: 12
+      num_heads: 8
+      intermediate_size: 2048
+      dropout: 0.1
+      activation: "gelu"
+    
+    projection:
+      input_dim: 512  # CLIP embedding dimension
+      output_dim: 1024  # Language model dimension
+      dropout: 0.1
+      activation: "gelu"
+    
+    adapter:
+      type: "lora"  # lora | adapter | prefix
+      rank: 16
+      alpha: 32
+      dropout: 0.1
+      target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
+  
+  audio_adapter:
+    enabled: false
+    model_type: "whisper"  # whisper | wav2vec2 | hubert
+    pretrained_model: "openai/whisper-tiny"
+    trust_remote_code: false
+    
+    audio_encoder:
+      hidden_size: 384
+      num_layers: 6
+      num_heads: 6
+      intermediate_size: 1536
+      dropout: 0.1
+      activation: "gelu"
+    
+    projection:
+      input_dim: 384
+      output_dim: 1024
+      dropout: 0.1
+      activation: "gelu"
+    
+    adapter:
+      type: "lora"
+      rank: 16
+      alpha: 32
+      dropout: 0.1
+      target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
+
+model:
+  pretrained_model: "Qwen/Qwen2.5-0.5B"
+  trust_remote_code: false
+  
+  d_model: 1024
+  n_layers: 16
+  n_heads: 16
+  vocab_size: 32000
+  seq_len: 4096
+  
+  hrm_enable: true
+  moe_enable: false
+  attn_impl: "triton"
+  norm_impl: "triton"
+
+training:
+  micro_batch: 2
+  grad_accum: 16
+  effective_batch_size: 32
+  lr: 1e-4
+  weight_decay: 0.01
+  epochs: 1
+  max_steps: 1000
+  
+  adapter_lr: 1e-3
+  adapter_weight_decay: 0.01
+  freeze_base_model: true
+  freeze_vision_encoder: false
+  freeze_audio_encoder: false
+  
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_eps: 1e-8
+  lr_scheduler: "cosine"
+  warmup_steps: 100
+  warmup_ratio: 0.1
+  
+  amp: "bf16"
+  grad_clip: 1.0
+  
+  activation_checkpointing: true
+  gradient_checkpointing: true
+  dataloader_num_workers: 4
+  dataloader_pin_memory: true
+  
+  log_interval: 10
+  eval_interval: 100
+  save_interval: 500
+  max_checkpoints: 3
+  
+  seed: 42
+
+data:
+  dataset: "multimodal-reasoning-mix"
+  max_length: 2048
+  max_image_size: 224
+  max_audio_length: 30.0  # seconds
+  
+  batch_size: 32
+  shuffle: true
+  drop_last: true
+  
+  tokenizer: "Qwen/Qwen2.5-0.5B"
+  add_special_tokens: true
+  padding: "max_length"
+  truncation: true
+  
+  image_processor: "openai/clip-vit-base-patch32"
+  image_size: 224
+  image_mean: [0.48145466, 0.4578275, 0.40821073]
+  image_std: [0.26862954, 0.26130258, 0.27577711]
+  
+  audio_processor: "openai/whisper-tiny"
+  audio_sampling_rate: 16000
+  audio_max_length: 30.0
+
+loss:
+  ce_weight: 1.0   # main loss
+  
+  vision_loss_weight: 0.1
+  audio_loss_weight: 0.1
+  contrastive_loss_weight: 0.1
+  
+  hrm_loss_weight: 1.0
+  halt_penalty: 0.1
+  sink_loss_weight: 0.1
+  
+  moe_aux_loss_weight: 0.01   # MoE losses (if enabled)
+  router_kl_weight: 0.01
+
+evaluation:
+  metrics:
+    - "perplexity"
+    - "accuracy"
+    - "vision_accuracy"
+    - "audio_accuracy"
+    - "contrastive_accuracy"
+    - "halt_rate"
+    - "tokens_per_sec"
+    - "vram_gb"
+  
+  eval_datasets:
+    - "multimodal-reasoning-mix"
+  
+  eval_batch_size: 16   # Evaluation settings
+  eval_max_length: 1024
+  eval_do_sample: false
+  eval_temperature: 1.0
+
+logging:
+  tensorboard: true   # Logging backends
+  jsonl: true
+  console: true
+  
+  log_dir: "./logs"   # Log directories
+  tensorboard_dir: "./logs/tensorboard"
+  
+  log_level: "INFO"
+  
+  log_metrics:
+    - "loss"
+    - "vision_loss"
+    - "audio_loss"
+    - "contrastive_loss"
+    - "learning_rate"
+    - "perplexity"
+    - "accuracy"
+    - "vision_accuracy"
+    - "audio_accuracy"
+    - "halt_rate"
+    - "tokens_per_sec"
+    - "vram_gb"
+    - "grad_norm"

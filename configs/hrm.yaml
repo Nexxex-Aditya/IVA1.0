@@ -1,0 +1,71 @@
+# HRM Controller Configuration
+hrm:
+  max_steps: 8
+  halt_penalty: 0.1
+  sink_strength_init: 0.5
+  temp_bounds: [0.1, 2.0]
+  z_h_init: 1.0
+  z_l_init: 0.1
+  
+  sink:
+    enabled: true
+    strength_init: 0.5
+    decay_rate: 0.95
+    min_strength: 0.1
+    max_strength: 2.0
+  
+  router_temp:
+    enabled: true
+    init_temp: 1.0
+    min_temp: 0.1
+    max_temp: 2.0
+    decay_rate: 0.99
+    warmup_steps: 1000
+  
+  halting:
+    threshold: 0.5
+    min_steps: 1
+    max_steps: 8
+    penalty_weight: 0.1
+    entropy_weight: 0.01
+  
+  state:
+    dtype: "float16"
+    device: "cuda"
+    persistent: true
+    checkpoint: true
+
+training:
+  hrm_loss_weight: 1.0
+  sink_loss_weight: 0.1
+  router_temp_loss_weight: 0.01
+  halt_loss_weight: 0.1
+  entropy_loss_weight: 0.01
+  
+  lr_schedule:
+    hrm_lr: 1e-4
+    sink_lr: 1e-3
+    router_temp_lr: 1e-3
+  
+  regularization:
+    l2_weight: 1e-5
+    dropout: 0.1
+    weight_decay: 0.01
+
+evaluation:
+  metrics:
+    - "halt_rate"
+    - "avg_steps"
+    - "sink_strength"
+    - "router_temp"
+    - "entropy"
+    - "loss"
+  
+  eval_interval: 100
+  log_interval: 10
+  
+  thresholds:
+    min_halt_rate: 0.1
+    max_halt_rate: 0.9
+    min_avg_steps: 1.0
+    max_avg_steps: 8.0

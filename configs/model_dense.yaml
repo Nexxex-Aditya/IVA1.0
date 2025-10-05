@@ -1,0 +1,47 @@
+
+model:
+  d_model: 1024
+  n_layers: 16
+  n_heads: 16
+  vocab_size: 32000
+  seq_len: 4096
+  rope_theta: 100000.0
+  attn_impl: "triton"  # torch | triton
+  norm_impl: "triton"  # torch | triton
+  moe_enable: false
+  hrm_enable: true
+  tie_embeddings: true
+  sliding_window: null  # null for full attention int for sliding window size
+
+hrm:
+  max_steps: 8
+  halt_penalty: 0.1
+  sink_strength_init: 0.5
+  temp_bounds: [0.1, 2.0]
+  z_h_init: 1.0
+  z_l_init: 0.1
+
+attention:
+  dropout: 0.1
+  use_flash_attn: false
+  causal: true
+  rope_theta: 100000.0
+
+norm:
+  eps: 1e-6
+  elementwise_affine: true
+
+ffn:
+  hidden_mult: 4
+  activation: "swiglu"  # swiglu | gelu | relu
+  dropout: 0.1
+
+generation:
+  max_length: 2048
+  temperature: 0.8
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+  pad_token_id: 0
+  eos_token_id: 2

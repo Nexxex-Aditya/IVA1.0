@@ -1,0 +1,151 @@
+# PPO Training Configuration
+training:
+  micro_batch: 2
+  grad_accum: 16
+  effective_batch_size: 32
+  lr: 1e-5
+  weight_decay: 0.01
+  epochs: 1
+  max_steps: 1000
+  
+  ppo_epochs: 4
+  ppo_clip_ratio: 0.2
+  value_loss_coef: 0.5
+  entropy_coef: 0.01
+  kl_coef: 0.1
+  gae_lambda: 0.95
+  gamma: 0.99
+  
+  optimizer: "adamw"
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_eps: 1e-8
+  lr_scheduler: "cosine"
+  warmup_steps: 50
+  warmup_ratio: 0.05
+  
+  amp: "bf16"
+  grad_clip: 1.0
+  
+  activation_checkpointing: true
+  gradient_checkpointing: true
+  dataloader_num_workers: 4
+  dataloader_pin_memory: true
+  
+  log_interval: 10
+  eval_interval: 100
+  save_interval: 500
+  max_checkpoints: 3
+  
+  seed: 42
+
+data:
+  prompt_dataset: "tiny-reasoning-mix"
+  max_prompt_length: 512
+  max_response_length: 1024
+  
+  batch_size: 32
+  shuffle: true
+  drop_last: true
+  
+  tokenizer: "Qwen/Qwen2.5-0.5B"
+  add_special_tokens: true
+  padding: "max_length"
+  truncation: true
+
+model:
+  pretrained_model: "Qwen/Qwen2.5-0.5B"
+  trust_remote_code: false
+  
+  d_model: 1024
+  n_layers: 16
+  n_heads: 16
+  vocab_size: 32000
+  seq_len: 4096
+  
+  hrm_enable: true
+  moe_enable: false
+  attn_impl: "triton"
+  norm_impl: "triton"
+
+reward_model:
+  pretrained_model: "Qwen/Qwen2.5-0.5B"
+  trust_remote_code: false
+  
+  reward_head_dim: 256
+  reward_dropout: 0.1
+  
+  rm_lr: 1e-4
+  rm_weight_decay: 0.01
+  rm_epochs: 1
+
+loss:
+  policy_loss_weight: 1.0
+  value_loss_weight: 0.5
+  entropy_loss_weight: 0.01
+  kl_loss_weight: 0.1
+  
+  hrm_loss_weight: 1.0
+  halt_penalty: 0.1
+  sink_loss_weight: 0.1
+  
+  moe_aux_loss_weight: 0.01   # MoE losses (if enabled)
+  router_kl_weight: 0.01
+
+generation:
+  max_length: 1024
+  temperature: 0.8
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+  
+  num_beams: 1
+  early_stopping: false
+  pad_token_id: 0
+  eos_token_id: 2
+  
+  rollout_batch_size: 16
+  rollout_max_length: 1024
+  rollout_temperature: 0.8
+
+evaluation:
+  metrics:
+    - "reward"
+    - "kl_divergence"
+    - "entropy"
+    - "perplexity"
+    - "halt_rate"
+    - "tokens_per_sec"
+    - "vram_gb"
+  
+  eval_datasets:
+    - "tiny-reasoning-mix"
+  
+  eval_batch_size: 16
+  eval_max_length: 1024
+  eval_do_sample: false
+  eval_temperature: 1.0
+
+logging:
+  tensorboard: true
+  jsonl: true
+  console: true
+  
+  log_dir: "./logs"
+  tensorboard_dir: "./logs/tensorboard"
+  
+  log_level: "INFO"
+  
+  log_metrics:
+    - "policy_loss"
+    - "value_loss"
+    - "entropy_loss"
+    - "kl_loss"
+    - "reward"
+    - "kl_divergence"
+    - "entropy"
+    - "halt_rate"
+    - "tokens_per_sec"
+    - "vram_gb"
+    - "grad_norm"

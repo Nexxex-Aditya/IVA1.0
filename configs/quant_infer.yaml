@@ -1,0 +1,127 @@
+# Quantized Inference Configuration
+inference:
+  max_length: 2048
+  temperature: 0.8
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.1
+  do_sample: true
+  num_beams: 1
+  early_stopping: false
+  
+  pad_token_id: 0
+  eos_token_id: 2
+  bos_token_id: 1
+  
+  batch_size: 1
+  max_batch_size: 8
+  timeout: 30.0
+
+quantization:
+  precision: "fp16"  # fp16 | bf16 | fp8   # Precision settings
+  kv_precision: "fp8"  # fp16 | bf16 | fp8
+  weight_quant: "int4"  # int4 | int8 | fp8 | none
+  
+  fp8:
+    enabled: true
+    ops: ["attention", "ffn"]  # Operations to quantize
+    amax_history_len: 1024
+    amax_compute_algo: "max"
+    scaling_factor_compute_algo: "max"
+    fp8_dtype: "fp8_e4m3"
+    amax_dtype: "fp32"
+  
+  int4:
+    enabled: true
+    scheme: "awq"  # awq | gptq | smoothquant
+    group_size: 128
+    zero_point: true
+    scale: true
+    quantize_weights: true
+    quantize_biases: false
+  
+  weight_only:
+    enabled: true
+    quantize_linear: true
+    quantize_embedding: true
+    quantize_lm_head: true
+    quantize_experts: true
+
+memory:
+  paged_kv_cache: true
+  kv_cache_dtype: "fp8"
+  kv_cache_size: 1024
+  kv_cache_blocks: 256
+  
+  max_memory_usage: 0.9  # fraction of available memory
+  memory_cleanup: true
+  memory_compaction: true
+  
+  activation_checkpointing: true
+  checkpoint_interval: 1
+
+model:
+  pretrained_model: "Qwen/Qwen2.5-0.5B"
+  trust_remote_code: false
+  
+  d_model: 1024
+  n_layers: 16
+  n_heads: 16
+  vocab_size: 32000
+  seq_len: 4096
+  
+  hrm_enable: true
+  moe_enable: false
+  attn_impl: "triton"
+  norm_impl: "triton"
+
+performance:
+  use_triton_kernels: true
+  autotune_kernels: true
+  kernel_cache_size: 1000
+  
+  num_workers: 4
+  pin_memory: true
+  prefetch_factor: 2
+  
+  torch_compile: false
+  torch_compile_mode: "default"
+  torch_compile_backend: "inductor"
+
+logging:
+  tensorboard: false
+  jsonl: true
+  console: true
+  
+  log_dir: "./logs"
+  
+  log_level: "INFO"
+  
+  log_metrics:
+    - "tokens_per_sec"
+    - "latency_ms"
+    - "memory_gb"
+    - "quantization_error"
+    - "fp8_amax_drift"
+    - "int4_accuracy"
+
+evaluation:
+  eval_datasets:
+    - "tiny-reasoning-mix"
+  
+  eval_batch_size: 1
+  eval_max_length: 1024
+  eval_do_sample: false
+  eval_temperature: 1.0
+  
+  quality_metrics:
+    - "perplexity"
+    - "accuracy"
+    - "bleu"
+    - "rouge"
+  
+  performance_metrics:
+    - "tokens_per_sec"
+    - "latency_ms"
+    - "memory_gb"
+    - "throughput"
